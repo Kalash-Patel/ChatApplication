@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+</head>
+<body>
+    <h1>{{group_name}} Groups</h1>
+    <textarea name="chat_text" id="dchat_text" cols="100" rows="10">
+
+        {% for chat in all_chats %}
+            {{chat}}
+        {% endfor %}
+
+    </textarea>
+    <input type="text" name="chat" id="dchat">
+    <input type="button" value="send" name="chatbtn" id="dchatbtn">
+    <input type="hidden" name="groupname" value={{group_name}} id="dgroup_name">
+
+    <script>
+        let groupName=document.getElementById("dgroup_name")
+        let ws = new WebSocket(
+                'ws://'+window.location.host+'/api/chat/send/'+'groupName'+'/'
+            )
+        ws.onopen = function(){
+            console.log("WebSocket Connection open.....")
+        }
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data); // String to object
+            let user=JSON.parse(data.message)
+            if (data.message=='Login Required'){
+                alert("Message Sent by an "+ data.user + ": " +"Login Required");
+            }
+            else{
+                document.getElementById("dchat_text").value += (user.user + ':' + user.message + '\n')
+            }   
+        };
+
+        ws.onclose = function(event){
+            console.log("WebSocket Connection closed.......", event.data)
+        };
+
+        const submitbtn = document.getElementById("dchatbtn");
+        submitbtn.addEventListener("click", function(){
+            let message = document.getElementById("dchat").value
+            ws.send(JSON.stringify({
+                'message': message
+            }))
+            document.getElementById("dchat").value=''
+        }) 
+    </script>
+</body>
+</html>
